@@ -1,5 +1,7 @@
 # ISRO-Ridge-Detection-System
 
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
+
 A lunar wrinkle ridge detection system built and evaluated across three approaches —
 classical phase-symmetry morphology, Hessian-based ridge filtering, and deep learning —
 compared head-to-head on the same DEM tiles to find out which ridges each one catches,
@@ -172,3 +174,7 @@ working at all.
   scripts committed instead)
 - `tests/` — correctness tests for preprocessing and each arm
 - `docs/` — architecture and reproduction notes
+
+## License
+
+MIT. See [LICENSE](LICENSE).
