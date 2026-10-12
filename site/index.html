@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lunar ridge detection — Shlok Vaishnav</title>
+<meta name="description" content="Three ways to detect lunar wrinkle ridges, compared on the same elevation tiles: which ridges each method finds, which it misses, and why.">
+<meta name="color-scheme" content="light dark">
+<link rel="canonical" href="https://shlokkvaishnav.github.io/lunar-ridge-detection/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Lunar ridge detection — Shlok Vaishnav">
+<meta property="og:description" content="Three ways to detect lunar wrinkle ridges, compared on the same elevation tiles.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%238c2346'/%3E%3C/svg%3E">
+<link rel="preload" href="assets/fonts/literata.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/instrument-sans.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css">
+<script type="module" src="main.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<main id="main">
+<p class="crumb"><a href="https://shlokkvaishnav.github.io/"><svg class="icon" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"/></svg> Shlok Vaishnav</a></p>
+<h1>Lunar ridge detection</h1>
+<p class="lead">A lunar wrinkle ridge detection system, built and tested with three approaches: classical phase-symmetry morphology, Hessian-based ridge filtering, and deep learning. All three run on the same elevation tiles, to find out which ridges each method finds, which it misses, and why.</p>
+<p class="buttons"><a class="btn" href="https://github.com/shlokkvaishnav/lunar-ridge-detection"><svg class="icon" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"/></svg> Code</a></p>
+
+<dl class="stats">
+<div class="stat"><dt>57</dt><dd>ridge vertices on 6 real tiles, the benchmark for every method</dd></div>
+<div class="stat"><dt>40% and 44%</dt><dd>found by the two classical methods</dd></div>
+<div class="stat"><dt>70%</dt><dd>found by the deep-learning model, with about 31% of each tile covered</dd></div>
+<div class="stat"><dt>14 of 21</dt><dd>vertices that both classical methods miss, found by the model</dd></div>
+</dl>
+
+<h2>Three methods, one benchmark</h2>
+<ol class="steps">
+<li><strong>Method A: phase symmetry.</strong> Classical morphology. It filters the shape of the fragments it finds before it links gaps. On real tiles this roughly tripled recall compared with the first approach, which thresholded by percentile and then closed gaps.</li>
+<li><strong>Method B: Hessian ridge filter.</strong> The Frangi filter, with the same post-processing as method A, so the comparison isolates the filter itself.</li>
+<li><strong>Method C: deep learning.</strong> A small two-branch convolutional network on the elevation map and its aspect, inspired by DBR-Net. It trained on a Kaggle GPU, on 114 of the 120 tiles. The 6 benchmark tiles were held out. The labels are weak: buffers drawn around ridge polylines, not hand-labeled masks.</li>
+</ol>
+<p>The data is a pilot set of 120 tiles taken from the remote LROC WAC and GLD100 mosaics, with no full download. The tiles are spread across the Thompson et al. 2017 ridge catalog. The benchmark is 6 real tiles with 57 ridge vertices. A vertex counts as found when the predicted mask covers its exact pixel.</p>
+
+<h2>Results</h2>
+<h3>Which ridges each method finds</h3>
+<figure>
+<div class="chart" id="chart-methods"></div>
+<figcaption>The two classical methods find different ridges. Together they find 36 of 57, but their masks then cover about 48 to 58% of each tile, so using both is a trade between recall and precision, not a free gain. The deep-learning model finds 40 of 57 at about 31% coverage.</figcaption>
+</figure>
+<p>Of the 21 vertices that both classical methods miss, the deep-learning model finds 14. A random mask with the same coverage on each tile would find about 6 of them (p = 0.0002, if the vertices are treated as independent, which is optimistic).</p>
+
+<h3>Tile by tile</h3>
+<figure>
+<div class="chart" id="chart-tiles"></div>
+<figcaption>Vertices found by the checkpoint from epoch 7 at a threshold of 0.5. It finds all the vertices on three tiles, and it finds only 5 of 14 on tile 3461.</figcaption>
+</figure>
+
+<h3>Training: the model overfits</h3>
+<figure>
+<div class="chart" id="chart-loss"></div>
+<figcaption>Training loss keeps falling. Validation loss is lowest at epoch 7 (0.553), and by epoch 60 it is 2.6 times higher. The first training run saved only the last checkpoint, so its result came from the overfit model. A second run saved the epoch-7 checkpoint too.</figcaption>
+</figure>
+
+<h3>The result depends on the threshold</h3>
+<figure>
+<div class="chart" id="chart-threshold"></div>
+<figcaption>At a threshold of 0.5, the epoch-7 checkpoint and the first run's final checkpoint both find 40 of 57. The epoch-7 checkpoint finds 56 of 57 at 0.3 and only 12 at 0.7. The final checkpoint of the second run, with identical code, found 12 of 57 (21.1%) at 0.5, where the first run found 70.2%.</figcaption>
+</figure>
+
+<h2>What these results do not show</h2>
+<ul class="points">
+<li>This holds on one benchmark: 6 tiles, 57 vertices and two checkpoints. It does not show that method C has no blind spots in general.</li>
+<li>The deep-learning result is not yet a settled win. After adjusting for coverage, the epoch-7 checkpoint is weaker than the first run's final one (1.96 times against 2.26 times better than a random mask).</li>
+<li>The two checkpoints do not agree on which vertices they find. A statement about one vertex holds for one checkpoint, or where both agree.</li>
+<li>Part of the classical methods' blind spot comes from the exact-pixel scoring. With a tolerance of 2 pixels, the vertices that both methods miss shrink from 21 to 12. Method C was not scored with a tolerance.</li>
+<li>The labels are weak, and the network is smaller than DBR-Net. That is a real gap in supervision quality.</li>
+</ul>
+</main>
+<footer>
+<p>The charts are drawn in your browser from the result files in <code>results/</code>. The build copies them into this page, so the page and the repository agree.</p>
+<p><a href="https://github.com/shlokkvaishnav/lunar-ridge-detection">Source code</a> <a href="assets/CREDITS.md">Credits</a></p>
+</footer>
+</body>
+</html>
