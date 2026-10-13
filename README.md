@@ -1,17 +1,18 @@
-# ISRO-Ridge-Detection-System
+# Lunar Ridge Detection
+
+A lunar wrinkle ridge detection system. It compares several methods on real lunar terrain to show which ridges each method finds and misses.
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
-A lunar wrinkle ridge detection system built and evaluated across three approaches —
-classical phase-symmetry morphology, Hessian-based ridge filtering, and deep learning —
-compared head-to-head on the same DEM tiles to find out which ridges each one catches,
-which it misses, and why.
+## Overview
 
-See [`plan.md`](plan.md) for the full plan: the three arms being implemented, data sources
-(LOLA DEM, LROC WAC, Chandrayaan-2 TMC-2), comparison methodology, sequencing, and
-alternate approaches considered.
+A lunar wrinkle ridge detection system built and evaluated across three approaches: classical phase-symmetry morphology (Arm A), Hessian-based ridge filtering (Arm B), and deep learning (Arm C). They are compared head-to-head on the same DEM tiles to find out which ridges each one catches, which it misses, and why.
 
-## Status
+## How it works
+
+The three arms run on the same lunar DEM tiles and use the same post-processing, so the comparison isolates the detector itself. Tiles come from remote LROC WAC and GLD100 mosaics, stratified across the Thompson et al. 2017 ridge catalog. See [`plan.md`](plan.md) for the full plan: the three arms, the data sources (LOLA DEM, LROC WAC, Chandrayaan-2 TMC-2), the comparison method, and the alternatives considered.
+
+## Results
 
 **All three arms implemented. Arm C (deep learning) substantially beats both classical arms
 on the exact same 6-tile benchmark (70.2% recall vs 40.4%/43.9%) — a real result, matched
@@ -158,14 +159,33 @@ pilot pulled directly from the remote LROC WAC + GLD100 mosaics (no full downloa
 > added mask area as it gains in recall. Do not claim the terrain-roughness hypothesis above
 > is confirmed; it's the best-supported explanation so far, not a tested one.
 
-See [`plan.md`](plan.md) for the full plan, `research/DECISION_LOG.md` for implementation
-decisions and full findings (why `phasepack` wasn't used, flank-detection, flat-tile,
-real-data clutter/shape-filtering, Arm A vs Arm B comparison, A/B complementarity, and the
-Arm C headline result), and `research/arm_c_deep_learning/SPEC.md` for Arm C's full writeup
-including the overfitting confound and infrastructure incidents getting a Kaggle GPU run
-working at all.
+The decision log has every implementation decision and finding: [`research/DECISION_LOG.md`](research/DECISION_LOG.md). The full writeup of Arm C, with the overfitting confound and the problems of getting a Kaggle GPU run to work, is in [`research/arm_c_deep_learning/SPEC.md`](research/arm_c_deep_learning/SPEC.md).
 
-## Repository structure
+## Run it locally
+
+```bash
+pip install -r requirements.txt
+python scripts/run_classical_arm.py --dem path/to/dem.tif --out results/   # Arm A
+python scripts/run_hessian_arm.py --dem path/to/dem.tif --out results/     # Arm B
+python scripts/build_tile_dataset.py --n 30                                # build the tile dataset
+```
+
+Without `--dem`, Arms A and B run on a synthetic DEM. Raw tiles and catalogs are gitignored: the download scripts are committed instead, and the tiles must exist locally to reproduce the real-data results.
+
+A CPU-only Docker image runs the analysis scripts (Arms A, B and C inference):
+
+```bash
+docker build -t isro-ridge .
+docker run --rm -v "$PWD":/work -w /work isro-ridge python <script>
+```
+
+## Tests
+
+```bash
+pytest tests/
+```
+
+## Repo layout
 
 - `research/` — spec, related-work positioning, decision log
 - `src/` — the three detection arms (classical, hessian, deep) plus shared preprocessing
@@ -174,6 +194,8 @@ working at all.
   scripts committed instead)
 - `tests/` — correctness tests for preprocessing and each arm
 - `docs/` — architecture and reproduction notes
+- `results/` — outputs of the arms and the comparison runs
+- `site/` — the project page
 
 ## License
 
